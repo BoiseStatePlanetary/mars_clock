@@ -21,7 +21,7 @@ def convert_to_float_delta_J2000(time):
     Converts an astropy.Time object into a Julian day float with J2000 subtracted
     
     Args:
-        time (astropy.Time): time or times to convert
+        time (astropy.Time or str): time or times to convert
         
     Returns:
         float or array of floats
@@ -30,8 +30,12 @@ def convert_to_float_delta_J2000(time):
     # J2000 epoch in Julian date
     J2000 = Time('2000-01-01 12:00:00', scale='tt')
     float_J2000 = J2000.jd # into a float
-    
-    float_JD_time = time.jd - float_J2000
+
+    loc_time = time
+    if(type(time) is str):
+        loc_time = Time(time)
+
+    float_JD_time = loc_time.jd - float_J2000
     
     return float_JD_time
 
