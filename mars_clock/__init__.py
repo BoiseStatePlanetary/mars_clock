@@ -2,6 +2,7 @@
 
 __version__ = '0.0.0'
 __author__ = 'Brian Jackson <bjackson@boisestate.edu>'
-__all__ = ['Ls_utils']
+__all__ = ['Ls_utils', 'mission_sols']
 
 from .Ls_utils import *
+from .mission_sols import *
