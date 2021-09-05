@@ -18,3 +18,10 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Changelog:
+++++++++++
+
+**0.0.1 (2021 Sep 4)**
+
+* Fixed documentation in README.md
