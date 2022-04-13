@@ -22,6 +22,10 @@ Indices and tables
 Changelog:
 ++++++++++
 
+**0.2.2 (2022 Apr 12)**
+
+* Added data file
+
 **0.2 (2022 Apr 12)**
 
 * Added Ls2JD
