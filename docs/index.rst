@@ -22,6 +22,10 @@ Indices and tables
 Changelog:
 ++++++++++
 
+**0.2 (2022 Apr 12)**
+
+* Added Ls2JD
+
 **0.0.1 (2021 Sep 4)**
 
 * Fixed documentation in README.md

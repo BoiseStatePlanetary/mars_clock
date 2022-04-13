@@ -1,6 +1,8 @@
 import numpy as np
 from astropy import units as u
 from astropy.time import Time
+import mars_clock
+import os
 
 # Define some constants
 mars_solar_day = 24.*u.hour + 39.*u.minute + 35.244*u.second
@@ -54,7 +56,7 @@ def convert_to_centuries(time):
     
 def calc_alpha(delta_J2000, mod_360=True):
     """
-    Returns the Sun angle using Eq 2 from Picqueux+ (2015)
+    Returns the Sun angle using Eq 2 from Piqueux+ (2015)
     
     Args:
         delta_J2000 (float or array of floats): Julian date difference between desired time and J2000 (2000 Jan 1 12:00:00)
@@ -79,7 +81,7 @@ def calc_alpha(delta_J2000, mod_360=True):
 
 def calc_mean_anomaly(delta_J2000):
     """
-    Returns the mean anomaly using Eq 3 from Picqueux+ (2015)
+    Returns the mean anomaly using Eq 3 from Piqueux+ (2015)
     
     Args:
         delta_J2000 (float or array of floats): Julian date difference between desired time and J2000 (2000 Jan 1 12:00:00)
@@ -95,7 +97,7 @@ def calc_mean_anomaly(delta_J2000):
 
 def calc_eccentricity(delta_J2000):
     """
-    Calculate evolving eccentricity from Eq 4 from Picqueux+ (2015)
+    Calculate evolving eccentricity from Eq 4 from Piqueux+ (2015)
     
     Args:
         delta_J2000 (float or array of floats): Julian date difference between desired time and J2000 (2000 Jan 1 12:00:00)
@@ -113,7 +115,7 @@ def calc_eccentricity(delta_J2000):
 
 def calc_PPS(delta_J2000):
     """
-    The planetary perturbation terms from Picqueux+ (2015) - you probably don't need to call this!
+    The planetary perturbation terms from Piqueux+ (2015) - you probably don't need to call this!
     
     Args:
         delta_J2000 (float or array of floats): Julian date difference between desired time and J2000 (2000 Jan 1 12:00:00)
@@ -140,7 +142,7 @@ def calc_PPS(delta_J2000):
 
 def calc_equation_of_center(delta_J2000):
     """
-    Eqn 5 from Picqueux+ (2015)
+    Eqn 5 from Piqueux+ (2015)
     
     Args:
         delta_J2000 (float or array of floats): Julian date difference between desired time and
@@ -182,7 +184,7 @@ def calc_equation_of_center(delta_J2000):
 
 def calc_Ls(delta_J2000, mod_360=True):
     """
-    Calculate Mars' seasonal angle Ls using Eq 7 from Picqueux+ (2015)
+    Calculate Mars' seasonal angle Ls using Eq 7 from Piqueux+ (2015)
     
     Args:
         delta_J2000 (float or array of floats): Julian date difference between desired time and J2000 (2000 Jan 1 12:00:00)
@@ -203,3 +205,91 @@ def calc_Ls(delta_J2000, mod_360=True):
         Ls = Ls % 360.
         
     return Ls
+
+def MY2JD(MY, data_file="Piqueux2015_Table1.csv"):
+    """
+    Returns the number of Julian days since J2000 for the beginning of a given Mars year
+
+    Args:
+        MY (float or array of floats): desired Mars year
+        data_file (str, optional): CSV file with Mars_year and delta J2000 dates,
+        defaults to Piqueux2015_Table1.csv
+
+    Returns:
+        float or array of floats: number of seconds since J2000 for the beginning of a given Mars year
+
+    """
+
+    # Read in data table which must map Mars year to Earth date
+    data_file_path = os.path.join(mars_clock.DATADIR, data_file)
+    date_data = np.genfromtxt(data_file_path, delimiter=',', names=True)
+
+    # Take the floor function
+    desired_MY = np.floor(MY)
+
+    if(np.isscalar(desired_MY)):
+
+        # Check that desired_MY is in range
+        if((desired_MY < np.min(date_data['Mars_year'])) |\
+           (desired_MY > np.max(date_data['Mars_year']))):
+            raise ValueError("desired_MY is out of range!")
+
+        # Calculate Julian date
+        ind = np.argmin(np.abs(date_data['Mars_year'] - desired_MY))
+        j_et = date_data['delta_J2000'][ind]
+
+        et = j_et
+
+    else:
+        et = np.array([])
+        for i in range(len(desired_MY)):
+
+            if((desired_MY[i] < np.min(date_data['Mars_year'])) |\
+               (desired_MY[i] > np.max(date_data['Mars_year']))):
+                raise ValueError("desired_MY is out of range!")
+
+            ind = np.argmin(np.abs(date_data['Mars_year'] - desired_MY[i]))
+
+            j_et = date_data['delta_J2000'][ind]
+            et = np.append(et, j_et)
+
+    return et
+def scalar_Ls2JD(Ls, MY, JD_resolution=0.1):
+    """
+    Calculate the Delta J2000 Julian date for a given Ls during Mars year MY
+    
+    Args:
+        Ls (float): solar longitude in degrees
+        MY (float): Mars year
+        JD_resolution (float, optional): initial resolution of JD grid; defaults to 1 day resolution
+        fac (int, optional): how far out in either direction to extend JD grid
+        
+    Returns:
+        Delta J2000 Julian date corresponding to Mars year MY and Ls
+    
+    """
+    num_days_in_Mars_year = 687.
+    
+    # Create grid of Ls-values for the whole Mars year
+    MY_JD = MY2JD(MY)
+    
+    lower_JD = MY_JD - 0.5*num_days_in_Mars_year
+    upper_JD = MY_JD + 0.5*num_days_in_Mars_year
+    JDs = np.arange(lower_JD, upper_JD, JD_resolution)
+    
+    Lss = calc_Ls(JDs)
+    
+    # Need to make sure Ls grid wraps around
+    #
+    # If the index of the minimum Ls-value is not zero, need to wrap
+    mn_ind = np.argmin(Lss)
+    if(mn_ind > 0):
+        ind = range(0, mn_ind)
+        Lss[ind] -= 360
+    
+    ret = np.interp(Ls, Lss, JDs)
+    
+    return ret
+
+# Cheat to make a vectorized version
+Ls2JD = np.vectorize(scalar_Ls2JD)
