@@ -1,7 +1,7 @@
 """A package for determining Ls-values from mission sols"""
 import os
 
-__version__ = '0.2.2'
+__version__ = '0.2.4'
 __author__ = 'Brian Jackson <bjackson@boisestate.edu>'
 __all__ = ['Ls_utils', 'mission_sols']
 

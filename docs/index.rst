@@ -22,6 +22,14 @@ Indices and tables
 Changelog:
 ++++++++++
 
+**0.2.4 (2022 Apr 12)**
+
+* Added include_package_data to setup
+
+**0.2.3 (2022 Apr 12)**
+
+* Added data file to MANIFEST.in
+
 **0.2.2 (2022 Apr 12)**
 
 * Added data file
