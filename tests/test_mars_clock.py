@@ -16,7 +16,7 @@ def test_convert_to_float_delta_J2000():
 
 def test_calc_Ls():
     # Testing dates from Picqueux+ (2015) to check for Ls = 0
-    data = np.genfromtxt("Picqueux2015_Table1.csv", delimiter=',', names=True)
+    data = np.genfromtxt("Piqueux2015_Table1.csv", delimiter=',', names=True)
 
     # Dates on which Ls should be equal to zero
     dates_delta_J2000 = data["delta_J2000"]
@@ -29,3 +29,12 @@ def test_calc_Ls():
 
     # Check that results agree with zero to within given accuracy
     assert(np.all(np.isclose(np.abs(calculated_Ls), 0., rtol=0., atol=Picqueux_quoted_accuracy)))
+
+def test_Ls2JD():
+    data = np.genfromtxt("Piqueux2015_Table1.csv", delimiter=',', names=True)
+    JDs = Ls2JD(np.zeros_like(data['Mars_year']), data['Mars_year'])
+    # Off by, at worst, about 18 min between 1607 and 2141. 
+    # Usually off by about 7 min
+    resids = (JDs - data['delta_J2000'])
+    # Better than 18 minutes
+    assert(np.max(np.abs(resids)) < 0.0125)
